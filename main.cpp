@@ -1,29 +1,66 @@
 #include <iostream>
 #include <cmath>
+#include <tuple>
+#include <cstdlib>
+#include <ctime>
 
-
-const int N = 1e4;
-const double eps = 1.0 / N;
+const double eps = 1.0e-6;
+const long N = 1.0 / eps;
 const double pi = 3.14159265359;
 
+typedef std::tuple<double, double, double> DoubleTuple;
 
-double function (double rho) {
-
+double accuracy(double x) {
+    //The function leaves the required number of decimal places.
+    return trunc(x / eps) * eps;
 }
 
-double FirstEstimating (double rho) {
-    return std::pow((4.0/3.0), 2) * function(rho);
+double fun(double rho, double m) {
+    return 1 / std::pow(pi, 2.0) / std::pow(rho, m);
 }
 
-double SecondEstimating (double rho, double l) {
-    return 16.0/(3.0 * N) * std::pow(rho, 2) * function(rho) * l;
+DoubleTuple roulette() {
+    //The function generates two random radius vector lengths and random cos of angle between them.
+    srand(time(NULL));
+    double rP = std::pow(eps * (rand()%(N+1)), 1.0/3.0);
+    double mu = eps * (rand()%(N+1)) - 1;
+    double rQ = std::pow(eps * (rand()%(N+1)), 1.0/3.0);
+    return std::make_tuple(rP, mu, rQ);
 }
 
-double MonteCarloMethod () {
+double rho(DoubleTuple& points) {
+    //The function returns distance between the ends of vectors rP and rQ by the cosine theorem.
+    double rP = std::get<0>(points);
+    double mu = std::get<1>(points);
+    double rQ = std::get<2>(points);
+    return std::sqrt(std::pow(rP, 2) + std::pow(rQ, 2) - 2*rP*rQ*mu);
+}
 
+double first_estimating(double fun(double arg, double m), double m) {
+    double sum = 0;
+    for(long i = 0; i < N; i++) {
+        DoubleTuple foo = roulette();
+        sum += fun(rho(foo), m);
+    }
+    return std::pow(4.0/3.0, 2) * eps * sum;
+}
+
+double second_estimating(double func(double arg, double m), double m) {
+    double sum = 0;
+    for(long i = 0; i < N; i++) {
+        DoubleTuple foo = roulette();
+        double rho_i = rho(foo);
+        double l = rho_i / std::get<2>(foo);
+        sum += rho_i * fun(rho_i, m) * l;
+    }
+    return 16.0 * eps / 3.0 * sum;
 }
 
 int main() {
-
+    std::cout << "Integrand:\t 1 / pi^2 * rho^m\n" <<
+    "m = 1\n" << "1st estimating:\t" << accuracy(first_estimating(fun, 1)) << std::endl <<
+    "2nd estimating:\t" << accuracy(second_estimating(fun, 1)) << std::endl <<
+    "m = 2\n" << "1st estimating:\t" << accuracy(first_estimating(fun, 2)) << std::endl <<
+    "2nd estimating:\t" << accuracy(second_estimating(fun, 2)) << std::endl;
     return 0;
 }
