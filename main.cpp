@@ -4,8 +4,8 @@
 #include <cstdlib>
 #include <ctime>
 
-const double eps = 1.0e-6;
-const long N = 1.0 / eps;
+const long N = 1.0e6;
+const double eps = 1.0 / N;
 const double pi = 3.14159265359;
 
 typedef std::tuple<double, double, double> DoubleTuple;
@@ -16,14 +16,14 @@ double accuracy(double x) {
 }
 
 double fun(double rho, double m) {
-    return 1 / std::pow(pi, 2.0) / std::pow(rho, m);
+    return 1 / std::pow(pi, 2) / std::pow(rho, m);
 }
 
 DoubleTuple roulette() {
     //The function generates two random radius vector lengths and random cos of angle between them.
     srand(time(NULL));
     double rP = std::pow(eps * (rand()%(N+1)), 1.0/3.0);
-    double mu = eps * (rand()%(N+1)) - 1;
+    double mu = eps * (rand()%(N+1)) - 1; //mu == cos(rP, rQ)
     double rQ = std::pow(eps * (rand()%(N+1)), 1.0/3.0);
     return std::make_tuple(rP, mu, rQ);
 }
@@ -50,14 +50,16 @@ double second_estimating(double func(double arg, double m), double m) {
     for(long i = 0; i < N; i++) {
         DoubleTuple foo = roulette();
         double rho_i = rho(foo);
-        double l = rho_i / std::get<2>(foo);
+        double rP = std::get<0>(foo);
+        double mu = std::get<1>(foo);
+        double l = rP*mu + std::sqrt(1 - std::pow(rP, 2)*(1 - std::pow(mu, 2)));
         sum += rho_i * fun(rho_i, m) * l;
     }
     return 16.0 * eps / 3.0 * sum;
 }
 
 int main() {
-    std::cout << "Integrand:\t 1 / pi^2 * rho^m\n" <<
+    std::cout << "Integrand:\t 1 / pi^2 * 1 / rho^m\n" <<
     "m = 1\n" << "1st estimating:\t" << accuracy(first_estimating(fun, 1)) << std::endl <<
     "2nd estimating:\t" << accuracy(second_estimating(fun, 1)) << std::endl <<
     "m = 2\n" << "1st estimating:\t" << accuracy(first_estimating(fun, 2)) << std::endl <<
