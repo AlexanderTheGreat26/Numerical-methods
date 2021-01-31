@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <ctime>
 
-const long N = 1.0e6;
+const long N = 1.0e5;
 const double eps = 1.0 / N;
 const double pi = 3.14159265359;
 
@@ -53,7 +53,7 @@ double second_estimating(double func(double arg, double m), double m) {
         double rP = std::get<0>(foo);
         double mu = std::get<1>(foo);
         double l = rP*mu + std::sqrt(1 - std::pow(rP, 2)*(1 - std::pow(mu, 2)));
-        sum += rho_i * fun(rho_i, m) * l;
+        sum += std::pow(rho_i, 2) * fun(rho_i, m) * l;
     }
     return 16.0 * eps / 3.0 * sum;
 }
